@@ -13,6 +13,9 @@ Build in-game, select an area, save it to a compact binary file, and load it bac
 /p2 - Point 2 read mouse position
 /savestruct <name> - Save structure to file to .../MyGames/Terraria/tModLoader/SavedStructures/<name>.bin
 /placestruct <name> - Place structure from file .../MyGames/Terraria/tModLoader/SavedStructures/<name>.bin
+/keepvis off - Turn off visibility of keep markers (it still solid)
+/keepvis on - Turn on visibility of keep markers
+/keep - gives the keep markers
 
 ### NOT SUPPORTED by this save format:
 - Chest contents
@@ -27,11 +30,12 @@ Build in-game, select an area, save it to a compact binary file, and load it bac
   leaving empty space instead of the original block.
 - Structure size is limited to 32767 x 32767 tiles (stored as short).
 
-## Usage
+## How to use
 1. Build a structure
-2. Place the cursor on the first point and write `/p1`
-3. Place the cursor on the second point and write `/p2`
-4. Write `/savestruct <name>`
-5. Copy the binary file .../MyGames/Terraria/tModLoader/SavedStructures/<name>.bin to your mod source
-6. Copy the `Reader.cs` file
-7. See the [UsageExample.cs](Content/UsageExample.cs) for how to use it
+2. (Optional) Use Keep Markers where the structure must not change the world. When the structure is placed, those cells keep whatever is already in the world (terrain, walls, liquids) instead of being replaced with air.
+3. Place the cursor on the first point and write `/p1`
+4. Place the cursor on the second point and write `/p2`
+5. Write `/savestruct <name>`
+6. Copy the binary file .../MyGames/Terraria/tModLoader/SavedStructures/<name>.bin to your mod source
+7. Copy the `Reader.cs` file
+8. See the [UsageExample.cs](Content/UsageExample.cs) for how to use it

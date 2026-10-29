@@ -19,7 +19,7 @@ public class KeepCommand : ModCommand
     public override void Action(CommandCaller caller, string input, string[] args)
     {
         caller.Player.QuickSpawnItem(caller.Player.GetSource_Misc("KeepCommand"),
-            ModContent.ItemType<KeepMarkerItem>(), 999);
+            ModContent.ItemType<KeepMarkerItem>(), 9999);
         caller.Reply("Given 999 Keep Markers");
     }
 }
@@ -103,5 +103,22 @@ public class PlaceStructCommand : ModCommand
         StructureReader.Place(s, origin.X, origin.Y);
 
         caller.Reply($"Placed {args[0]} at {origin}");
+    }
+}
+
+
+public class KeepVisibleCommand : ModCommand
+{
+    public override CommandType Type => CommandType.Chat;
+    public override string Command => "keepvis";
+    public override string Usage => "/keepvis [on|off]";
+
+    public override void Action(CommandCaller caller, string input, string[] args)
+    {
+        if (args.Length > 0 && args[0] == "on") KeepMarkerVisibility.Visible = true;
+        else if (args.Length > 0 && args[0] == "off") KeepMarkerVisibility.Visible = false;
+        else KeepMarkerVisibility.Visible = !KeepMarkerVisibility.Visible;
+
+        caller.Reply($"Keep markers: {(KeepMarkerVisibility.Visible ? "visible" : "hidden")}");
     }
 }

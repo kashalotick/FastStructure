@@ -4,3 +4,14 @@ Items: {
 		Tooltip: ""
 	}
 }
+
+Configs: {
+	Config: {
+		DisplayName: Config
+
+		EnableExampleStructureGen: {
+			Label: Enable Example Structure Gen
+			Tooltip: ""
+		}
+	}
+}
