@@ -9,13 +9,13 @@ Build in-game, select an area, save it to a compact binary file, and load it bac
 - `EnableExampleStructureGen` -  enable or disable the example structure world gen (default: false)
 
 ### Commands
-/p1 - Point 1 read mouse position
-/p2 - Point 2 read mouse position
-/savestruct <name> - Save structure to file to .../MyGames/Terraria/tModLoader/SavedStructures/<name>.bin
-/placestruct <name> - Place structure from file .../MyGames/Terraria/tModLoader/SavedStructures/<name>.bin
-/keepvis off - Turn off visibility of keep markers (it still solid)
-/keepvis on - Turn on visibility of keep markers
-/keep - gives the keep markers
+- /p1 - Point 1 read mouse position
+- /p2 - Point 2 read mouse position
+- /savestruct <name> - Save structure to file to .../MyGames/Terraria/tModLoader/SavedStructures/<name>.bin
+- /placestruct <name> - Place structure from file .../MyGames/Terraria/tModLoader/SavedStructures/<name>.bin
+- /keepvis off - Turn off visibility of keep markers (it still solid)
+- /keepvis on - Turn on visibility of keep markers
+- /keep - gives the keep markers
 
 ### NOT SUPPORTED by this save format:
 - Chest contents
