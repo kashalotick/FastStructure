@@ -1,0 +1,3 @@
+displayName = FastStructure
+author = Kashalotick
+version = 0.1

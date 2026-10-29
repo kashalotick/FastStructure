@@ -1,0 +1,1 @@
+FastStructure is a developer tool for saving parts of your world as structure files, so you can spawn them from your own mod without depending on another mod.

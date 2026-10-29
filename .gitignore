@@ -1,0 +1,21 @@
+# Visual Studio / Rider / IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs & temporary files
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+
+# tModLoader built files
+*.tmod
+
+# OS generated files
+.DS_Store
+Thumbs.db
