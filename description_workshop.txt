@@ -38,10 +38,7 @@ own mod's code. The finished mod has no dependency on FastStructure.
 
 ### NOT SUPPORTED by this save format:
 
-- Chest contents
-- Sign text data
-- Tile entities (mannequins, weapon racks, item frames, food platters, hat racks, logic sensors, mod TEs). The tiles are
-  placed, but the entity and anything stored in it is not created
+- Chests, signs, Tile entities (mannequins, weapon racks, item frames, food platters, hat racks, logic sensors, mod TEs). Full list: field `IgnoredTiles` in  [StructureSaver.cs](Content/StructureSaver.cs) 
 - Custom ITileData from mods
 - Wires
 - Wall paint, and the invisible/fullbright coatings on tiles and walls

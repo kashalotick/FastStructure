@@ -1,4 +1,9 @@
-﻿# v0.2
+﻿# v0.3
+- Add relative to selection origin position under cursor for SelectionWand
+- Add placement mode with keep markers in menu
+- Remove saving some tiles as containers, mannequin. Full list: field `IgnoredTiles` in  [StructureSaver.cs](Content/StructureSaver.cs)
+
+# v0.2
 - Add /liststruct and /structmenu command
 - Add struct
 - Add selection wand, structure menu item
