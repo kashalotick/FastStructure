@@ -62,6 +62,7 @@ public class StructureSelectionDraw : ModSystem
         int held = player.HeldItem.type;
         if (held != ModContent.ItemType<StructureWand>()
             && held != ModContent.ItemType<StructureMenuItem>()
+            && held != ModContent.ItemType<KeepMarkerItem>()
             && !StructureMenuSystem.IsOpen)
         {
             return;
@@ -127,5 +128,36 @@ public class StructureSelectionDraw : ModSystem
         Fill(sb, new Rectangle(r.X, r.Bottom - t, r.Width, t), c);
         Fill(sb, new Rectangle(r.X, r.Y + t, t, r.Height - 2 * t), c);
         Fill(sb, new Rectangle(r.Right - t, r.Y + t, t, r.Height - 2 * t), c);
+    }
+    
+    internal static void DrawHover(SpriteBatch sb)
+    {
+        if (Main.LocalPlayer.HeldItem.type != ModContent.ItemType<StructureWand>()) return;
+        if (StructureMenuSystem.MouseOverMenu || StructureMenuSystem.Pending != null) return;
+
+        Point t = Main.MouseWorld.ToTileCoordinates();
+        Rectangle r = TileRect(t);
+
+        Fill(sb, r, Color.Yellow * 0.35f);
+        Outline(sb, r, 2, Color.Yellow);
+
+        string text;
+        if (StructSelection.HasP1 && StructSelection.HasP2)
+        {
+            Point a = StructSelection.P1, b = StructSelection.P2;
+            int ox = Math.Min(a.X, b.X), oy = Math.Min(a.Y, b.Y);
+            int w = Math.Abs(a.X - b.X) + 1, h = Math.Abs(a.Y - b.Y) + 1;
+
+            int rx = t.X - ox, ry = t.Y - oy;
+            bool inside = rx >= 0 && ry >= 0 && rx < w && ry < h;
+
+            text = $"{rx}, {ry}" + (inside ? "" : " (outside)");
+        }
+        else
+        {
+            text = $"world {t.X}, {t.Y} (no origin yet)";
+        }
+
+        Utils.DrawBorderString(sb, text, new Vector2(r.Right + 8, r.Y - 6), Color.Yellow, 0.9f);
     }
 }

@@ -496,6 +496,7 @@ public class WorldOverlaySystem : ModSystem
         {
             StructureSelectionDraw.DrawOverlay(Main.spriteBatch);
             StructurePreviewDraw.DrawOverlay(Main.spriteBatch);
+            StructureSelectionDraw.DrawHover(Main.spriteBatch);
             return true;
         }, InterfaceScaleType.Game));
     }
