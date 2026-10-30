@@ -64,18 +64,23 @@ public class StructureReader
         }
     }
 
-    /// <summary>
-    /// Place structure in the world from stream
-    /// </summary>
-    /// <param name="s">stream from <see cref="Open"/>, positioned at the start of the file</param>
-    /// <param name="x0">X of the top left corner</param>
-    /// <param name="y0">Y of the top left corner</param>
-    /// <remarks>
-    /// Tiles and walls from mods that are not loaded are skipped.
-    /// Cells saved as Keep Marker are not touched.
-    /// </remarks>
-    /// <exception cref="InvalidDataException">The file has an unknown format version.</exception>
-    public static void Place(Stream s, int x0, int y0)
+/// <summary>
+/// Place structure in the world from stream
+/// </summary>
+/// <param name="s">stream from <see cref="Open"/>, positioned at the start of the file</param>
+/// <param name="x0">X of the top left corner</param>
+/// <param name="y0">Y of the top left corner</param>
+/// <remarks>
+/// Tiles and walls from mods that are not loaded are skipped.
+/// Cells saved as Keep Marker are not touched.
+/// If the stream is seekable, its position is restored after placing,
+/// so the same stream can be passed to <see cref="Place"/> several times.
+/// </remarks>
+/// <exception cref="InvalidDataException">The file has an unknown format version.</exception>
+public static void Place(Stream s, int x0, int y0)
+{
+    long start = s.CanSeek ? s.Position : 0;
+    try
     {
         using var br = new BinaryReader(s, System.Text.Encoding.UTF8, leaveOpen: true);
 
@@ -104,6 +109,7 @@ public class StructureReader
                     t.TileType = (ushort)type;
                     t.TileFrameX = fx;
                     t.TileFrameY = fy;
+                    t.TileFrameNumber = (byte)WorldGen.genRand.Next(3); 
                     t.TileColor = color;
                     t.BlockType = (BlockType)block;
                     t.HasActuator = (flags & 1) != 0;
@@ -114,8 +120,15 @@ public class StructureReader
             else t.HasTile = false;
 
             int wall = ReadType(br, true);
-            t.WallType = wall >= 0 ? (ushort)wall : (ushort)0;
-
+            if (wall >= 0)
+            {
+                t.WallType = (ushort)wall;
+                t.WallFrameNumber = (byte)WorldGen.genRand.Next(3);   // new
+            }
+            else
+            {
+                t.WallType = 0;
+            }
             t.LiquidAmount = br.ReadByte();
             t.LiquidType = br.ReadByte();
         }
@@ -124,8 +137,11 @@ public class StructureReader
         if (Main.netMode == NetmodeID.Server)
             NetMessage.SendTileSquare(-1, x0, y0, w, h);
     }
-
-    // returns -1 if the mod type can't be found
+    finally
+    {
+        if (s.CanSeek) s.Position = start;
+    }
+}    // returns -1 if the mod type can't be found
     static int ReadType(BinaryReader br, bool isWall)
     {
         if (br.ReadBoolean()) return br.ReadUInt16();

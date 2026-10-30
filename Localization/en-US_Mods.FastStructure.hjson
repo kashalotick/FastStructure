@@ -3,6 +3,16 @@ Items: {
 		DisplayName: Keep Marker Item
 		Tooltip: ""
 	}
+
+	StructureWand: {
+		Tooltip: ""
+		DisplayName: Structure Wand
+	}
+
+	StructureMenuItem: {
+		DisplayName: Structure Menu Item
+		Tooltip: ""
+	}
 }
 
 Configs: {

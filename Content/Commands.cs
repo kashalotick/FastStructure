@@ -6,10 +6,6 @@ using Terraria.ModLoader;
 
 namespace FastStructure.Content;
 
-public class StructSelection : ModSystem
-{
-    public static Point P1, P2;
-}
 
 public class KeepCommand : ModCommand
 {
@@ -120,5 +116,71 @@ public class KeepVisibleCommand : ModCommand
         else KeepMarkerVisibility.Visible = !KeepMarkerVisibility.Visible;
 
         caller.Reply($"Keep markers: {(KeepMarkerVisibility.Visible ? "visible" : "hidden")}");
+    }
+}
+
+public class ListStructCommand : ModCommand
+{
+    public override CommandType Type => CommandType.Chat;
+    public override string Command => "liststruct";
+
+    public override void Action(CommandCaller caller, string input, string[] args)
+    {
+        string dir = Path.Combine(Main.SavePath, "SavedStructures");
+        if (!Directory.Exists(dir))
+        {
+            caller.Reply("No saved structures yet.");
+            return;
+        }
+
+        string[] files = Directory.GetFiles(dir, "*.bin");
+        if (files.Length == 0)
+        {
+            caller.Reply("No saved structures yet.");
+            return;
+        }
+
+        Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+        caller.Reply($"Saved structures ({files.Length}):");
+
+        foreach (string file in files)
+        {
+            string name = Path.GetFileNameWithoutExtension(file);
+            try
+            {
+                using var fs = File.OpenRead(file);
+                var (w, h) = StructureReader.GetSize(fs);
+                caller.Reply($"  {name} ({w}x{h})");
+            }
+            catch (Exception)
+            {
+                caller.Reply($"  {name} (unreadable or old format)");
+            }
+        }
+    }
+}
+
+
+public class StructMenuCommand : ModCommand
+{
+    public override CommandType Type => CommandType.Chat;
+    public override string Command => "structmenu";
+
+    public override void Action(CommandCaller caller, string input, string[] args)
+    {
+        StructureMenuSystem.Toggle();
+    }
+}
+
+public class WandCommand : ModCommand
+{
+    public override CommandType Type => CommandType.Chat;
+    public override string Command => "wand";
+ 
+    public override void Action(CommandCaller caller, string input, string[] args)
+    {
+        caller.Player.QuickSpawnItem(caller.Player.GetSource_Misc("WandCommand"),
+            ModContent.ItemType<StructureWand>());
+        caller.Reply("Given Structure Wand (LMB = P1, RMB = P2)");
     }
 }

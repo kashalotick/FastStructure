@@ -36,5 +36,7 @@ public class ExampleSavedStructureGen : ModSystem
         var size = StructureReader.GetSize(testStream);
         
         StructureReader.Place(testStream, x - size.width / 2, y - size.height / 2);
+        StructureReader.Place(testStream, x - size.width / 2, Main.UnderworldLayer - 100);
+
     }
 }
