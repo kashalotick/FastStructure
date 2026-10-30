@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace FastStructure.Content;
@@ -12,7 +14,25 @@ public static class StructureSaver
     const byte CellKeep = 0; // leave the world as it is
     const byte CellNormal = 1; // cell data follows
 
-
+    
+    /// <summary>
+    /// Tile types that are NOT written to the file (saved as an empty tile).
+    /// Wall and liquid of that cell are still saved. Edit the list as you like.
+    /// </summary>
+    public static readonly HashSet<int> IgnoredTiles = new()
+    {
+        TileID.Containers, TileID.Containers2, TileID.Dressers,
+        TileID.Mannequin, TileID.Womannequin, TileID.DisplayDoll,
+        TileID.WeaponsRack2, TileID.HatRack, TileID.FoodPlatter,
+        TileID.LogicSensor, TileID.ItemFrame, TileID.TargetDummy,
+        TileID.Signs,
+    };
+    
+    static bool IsIgnored(int type) =>
+        IgnoredTiles.Contains(type)
+        || TileID.Sets.BasicChest[type]      // modded chests that register themselves
+        || TileID.Sets.BasicDresser[type];
+    
     /// <summary>
     /// Save structure to file
     /// </summary>
@@ -45,8 +65,9 @@ public static class StructureSaver
             }
 
             bw.Write(CellNormal);
-            bw.Write(t.HasTile);
-            if (t.HasTile)
+            bool hasTile = t.HasTile && !IsIgnored(t.TileType);
+            bw.Write(hasTile);
+            if (hasTile)
             {
                 WriteType(bw, t.TileType, isWall: false);
                 bw.Write(t.TileFrameX);
