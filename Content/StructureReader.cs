@@ -70,6 +70,9 @@ public class StructureReader
 /// <param name="s">stream from <see cref="Open"/>, positioned at the start of the file</param>
 /// <param name="x0">X of the top left corner</param>
 /// <param name="y0">Y of the top left corner</param>
+/// <param name="keepMarkerType">
+/// Tile type to put on cells saved as Keep Marker. -1 (default) leaves those cells untouched.
+/// </param>
 /// <remarks>
 /// Tiles and walls from mods that are not loaded are skipped.
 /// Cells saved as Keep Marker are not touched.
@@ -77,7 +80,7 @@ public class StructureReader
 /// so the same stream can be passed to <see cref="Place"/> several times.
 /// </remarks>
 /// <exception cref="InvalidDataException">The file has an unknown format version.</exception>
-public static void Place(Stream s, int x0, int y0)
+public static void Place(Stream s, int x0, int y0, int keepMarkerType = -1)
 {
     long start = s.CanSeek ? s.Position : 0;
     try
@@ -92,8 +95,21 @@ public static void Place(Stream s, int x0, int y0)
         for (int x = 0; x < w; x++)
         for (int y = 0; y < h; y++)
         {
-            if (br.ReadByte() == CellKeep) continue;
-
+            if (br.ReadByte() == CellKeep)
+            {
+                if (keepMarkerType >= 0)
+                {
+                    Tile k = Main.tile[x0 + x, y0 + y];
+                    k.HasTile = true;
+                    k.TileType = (ushort)keepMarkerType;
+                    k.TileFrameX = 0;
+                    k.TileFrameY = 0;
+                    k.TileColor = 0;
+                    k.BlockType = BlockType.Solid;
+                    k.IsActuated = false;
+                }
+                continue;
+            }
             Tile t = Main.tile[x0 + x, y0 + y];
 
             if (br.ReadBoolean())

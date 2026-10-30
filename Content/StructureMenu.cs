@@ -21,6 +21,7 @@ public class StructureMenuSystem : ModSystem
     /// <summary>Structure name waiting for a click in the world, or null.</summary>
     static string _pending;
 
+    public static bool PlaceKeepMarkers;
     public static (int w, int h) PendingSize { get; private set; }
 
     /// <summary>Structure name waiting for a click in the world, or null.</summary>
@@ -126,7 +127,8 @@ public class StructurePlacePlayer : ModPlayer
         try
         {
             using var fs = File.OpenRead(path);
-            StructureReader.Place(fs, o.X, o.Y);
+            StructureReader.Place(fs, o.X, o.Y,
+                StructureMenuSystem.PlaceKeepMarkers ? ModContent.TileType<KeepMarker>() : -1);
             Main.NewText($"Placed {StructureMenuSystem.Pending} at {o.X}, {o.Y}", Color.LimeGreen);
         }
         catch (Exception e)
@@ -192,7 +194,7 @@ public class StructureMenuState : UIState
     NameBox _name;
     UIText _selection, _status;
     UITextPanel<string> _visButton;
-
+    UITextPanel<string> _modeButton;
     public bool MouseOver => _panel != null && _panel.ContainsPoint(Main.MouseScreen);
 
     public override void OnInitialize()
@@ -271,14 +273,21 @@ public class StructureMenuState : UIState
         _list.SetScrollbar(scroll);
 
         // bottom
-        var refresh = Button("Refresh", 100, Refresh);
-        refresh.Left.Set(0, 0);
-        refresh.Top.Set(444, 0);
+        var refresh = Button("Refresh", 80, Refresh);
+        refresh.Left.Set(0, 0); refresh.Top.Set(444, 0);
         _panel.Append(refresh);
 
+        _modeButton = Button("", 130, () =>
+        {
+            StructureMenuSystem.PlaceKeepMarkers = !StructureMenuSystem.PlaceKeepMarkers;
+            UpdateModeText();
+        });
+        _modeButton.Left.Set(86, 0); _modeButton.Top.Set(444, 0);
+        UpdateModeText();
+        _panel.Append(_modeButton);
+
         _status = new UIText("", 0.8f);
-        _status.Left.Set(110, 0);
-        _status.Top.Set(454, 0);
+        _status.Left.Set(222, 0); _status.Top.Set(454, 0);
         _panel.Append(_status);
     }
 
@@ -299,9 +308,7 @@ public class StructureMenuState : UIState
             _selection.SetText("Selection: set P1 and P2 with the wand");
         }
 
-        _status.SetText(StructureMenuSystem.Pending == null
-            ? ""
-            : $"Placing {StructureMenuSystem.Pending}: LMB in world, RMB cancels");
+        _status.SetText(StructureMenuSystem.Pending == null ? "" : $"Placing {StructureMenuSystem.Pending}");
     }
 
     public void Refresh()
@@ -399,6 +406,8 @@ public class StructureMenuState : UIState
     void UpdateVisText() =>
         _visButton.SetText($"Keep: {(KeepMarkerVisibility.Visible ? "on" : "off")}");
 
+    void UpdateModeText() =>
+        _modeButton.SetText(StructureMenuSystem.PlaceKeepMarkers ? "Mode: markers" : "Mode: normal");
     static UITextPanel<string> Button(string text, float width, Action onClick)
     {
         var b = new UITextPanel<string>(text, 0.8f);
@@ -474,8 +483,10 @@ public class StructurePreviewDraw : ModSystem
 
         Point o = Main.MouseWorld.ToTileCoordinates();
         bool outside = o.X < 0 || o.Y < 0 || o.X + w > Main.maxTilesX || o.Y + h > Main.maxTilesY;
-        Color c = outside ? Color.Red : Color.LimeGreen;
-
+        Color c = outside ? Color.Red
+            : StructureMenuSystem.PlaceKeepMarkers ? Color.Magenta
+            : Color.LimeGreen;
+        
         Rectangle frame = new(o.X * 16 - (int)Main.screenPosition.X, o.Y * 16 - (int)Main.screenPosition.Y, w * 16, h * 16);
 
         StructureSelectionDraw.Fill(sb, frame, c * 0.15f);
