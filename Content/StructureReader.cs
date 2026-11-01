@@ -64,60 +64,98 @@ public class StructureReader
         }
     }
 
-/// <summary>
-/// Place structure in the world from stream
-/// </summary>
-/// <param name="s">stream from <see cref="Open"/>, positioned at the start of the file</param>
-/// <param name="x0">X of the top left corner</param>
-/// <param name="y0">Y of the top left corner</param>
-/// <param name="keepMarkerType">
-/// Tile type to put on cells saved as Keep Marker. -1 (default) leaves those cells untouched.
-/// </param>
-/// <remarks>
-/// Tiles and walls from mods that are not loaded are skipped.
-/// Cells saved as Keep Marker are not touched.
-/// If the stream is seekable, its position is restored after placing,
-/// so the same stream can be passed to <see cref="Place"/> several times.
-/// </remarks>
-/// <exception cref="InvalidDataException">The file has an unknown format version.</exception>
-public static void Place(Stream s, int x0, int y0, int keepMarkerType = -1)
-{
-    long start = s.CanSeek ? s.Position : 0;
-    try
+    
+    /// <summary>
+    /// Decides whether a cell of the structure is applied to the world.
+    /// </summary>
+    /// <param name="x">World X of the cell</param>
+    /// <param name="y">World Y of the cell</param>
+    /// <param name="existing">Tile currently in the world at this position</param>
+    /// <param name="newType">
+    /// Tile type the structure wants to place here, or -1 if the cell has no tile
+    /// (or its tile is from a mod that is not loaded)
+    /// </param>
+    /// <returns>true to apply the cell (tile, wall and liquid), false to leave the world untouched there</returns>
+    public delegate bool CellFilter(int x, int y, Tile existing, int newType);
+
+
+    /// <summary>
+    /// Place structure in the world from stream
+    /// </summary>
+    /// <param name="s">stream from <see cref="Open"/>, positioned at the start of the file</param>
+    /// <param name="x0">X of the top left corner</param>
+    /// <param name="y0">Y of the top left corner</param>
+    /// <param name="keepMarkerType">
+    /// Tile type to put on cells saved as Keep Marker. -1 (default) leaves those cells untouched.
+    /// </param>
+    /// <param name="filter">
+    /// Optional. Called for every normal cell before it is applied, see <see cref="CellFilter"/>.
+    /// Not called for Keep Marker cells.
+    /// </param>
+    /// <remarks>
+    /// Tiles and walls from mods that are not loaded are skipped.
+    /// Cells saved as Keep Marker are not touched.
+    /// If the stream is seekable, its position is restored after placing,
+    /// so the same stream can be passed to <see cref="Place"/> several times.
+    /// The filter runs while the structure is still being placed, so neighbouring cells
+    /// may not be placed yet. Collect positions in it and act after Place returns.
+    /// </remarks>
+    /// <exception cref="InvalidDataException">The file has an unknown format version.</exception>
+    public static void Place(Stream s, int x0, int y0, int keepMarkerType = -1, CellFilter filter = null)
     {
-        using var br = new BinaryReader(s, System.Text.Encoding.UTF8, leaveOpen: true);
-
-        byte ver = br.ReadByte();
-        if (ver != FormatVersion) throw new InvalidDataException($"Unknown structure format v{ver}");
-
-        int w = br.ReadInt16(), h = br.ReadInt16();
-
-        for (int x = 0; x < w; x++)
-        for (int y = 0; y < h; y++)
+        long start = s.CanSeek ? s.Position : 0;
+        try
         {
-            if (br.ReadByte() == CellKeep)
-            {
-                if (keepMarkerType >= 0)
-                {
-                    Tile k = Main.tile[x0 + x, y0 + y];
-                    k.HasTile = true;
-                    k.TileType = (ushort)keepMarkerType;
-                    k.TileFrameX = 0;
-                    k.TileFrameY = 0;
-                    k.TileColor = 0;
-                    k.BlockType = BlockType.Solid;
-                    k.IsActuated = false;
-                }
-                continue;
-            }
-            Tile t = Main.tile[x0 + x, y0 + y];
+            using var br = new BinaryReader(s, System.Text.Encoding.UTF8, leaveOpen: true);
 
-            if (br.ReadBoolean())
+            byte ver = br.ReadByte();
+            if (ver != FormatVersion) throw new InvalidDataException($"Unknown structure format v{ver}");
+
+            int w = br.ReadInt16(), h = br.ReadInt16();
+
+            for (int x = 0; x < w; x++)
+            for (int y = 0; y < h; y++)
             {
-                int type = ReadType(br, false);
-                short fx = br.ReadInt16(), fy = br.ReadInt16();
-                byte color = br.ReadByte(), block = br.ReadByte();
-                byte flags = br.ReadByte();
+                if (br.ReadByte() == CellKeep)
+                {
+                    if (keepMarkerType >= 0)
+                    {
+                        Tile k = Main.tile[x0 + x, y0 + y];
+                        k.HasTile = true;
+                        k.TileType = (ushort)keepMarkerType;
+                        k.TileFrameX = 0;
+                        k.TileFrameY = 0;
+                        k.TileColor = 0;
+                        k.BlockType = BlockType.Solid;
+                        k.IsActuated = false;
+                    }
+
+                    continue;
+                }
+
+                // read the whole cell first, so the stream stays in sync even if the cell is skipped
+                bool hasTile = br.ReadBoolean();
+                int type = -1;
+                short fx = 0, fy = 0;
+                byte color = 0, block = 0, flags = 0;
+
+                if (hasTile)
+                {
+                    type = ReadType(br, false);
+                    fx = br.ReadInt16();
+                    fy = br.ReadInt16();
+                    color = br.ReadByte();
+                    block = br.ReadByte();
+                    flags = br.ReadByte();
+                }
+
+                int wall = ReadType(br, true);
+                byte liquidAmount = br.ReadByte();
+                byte liquidType = br.ReadByte();
+
+                Tile t = Main.tile[x0 + x, y0 + y];
+
+                if (filter != null && !filter(x0 + x, y0 + y, t, type)) continue;
 
                 if (type >= 0)
                 {
@@ -125,39 +163,35 @@ public static void Place(Stream s, int x0, int y0, int keepMarkerType = -1)
                     t.TileType = (ushort)type;
                     t.TileFrameX = fx;
                     t.TileFrameY = fy;
-                    t.TileFrameNumber = (byte)WorldGen.genRand.Next(3); 
+                    t.TileFrameNumber = (byte)WorldGen.genRand.Next(3);
                     t.TileColor = color;
                     t.BlockType = (BlockType)block;
                     t.HasActuator = (flags & 1) != 0;
                     t.IsActuated = (flags & 2) != 0;
                 }
                 else t.HasTile = false;
-            }
-            else t.HasTile = false;
 
-            int wall = ReadType(br, true);
-            if (wall >= 0)
-            {
-                t.WallType = (ushort)wall;
-                t.WallFrameNumber = (byte)WorldGen.genRand.Next(3);   // new
+                if (wall >= 0)
+                {
+                    t.WallType = (ushort)wall;
+                    t.WallFrameNumber = (byte)WorldGen.genRand.Next(3);
+                }
+                else t.WallType = 0;
+
+                t.LiquidAmount = liquidAmount;
+                t.LiquidType = liquidType;
             }
-            else
-            {
-                t.WallType = 0;
-            }
-            t.LiquidAmount = br.ReadByte();
-            t.LiquidType = br.ReadByte();
+
+            WorldGen.RangeFrame(x0, y0, x0 + w, y0 + h);
+            if (Main.netMode == NetmodeID.Server)
+                NetMessage.SendTileSquare(-1, x0, y0, w, h);
         }
+        finally
+        {
+            if (s.CanSeek) s.Position = start;
+        }
+    } // returns -1 if the mod type can't be found
 
-        WorldGen.RangeFrame(x0, y0, x0 + w, y0 + h);
-        if (Main.netMode == NetmodeID.Server)
-            NetMessage.SendTileSquare(-1, x0, y0, w, h);
-    }
-    finally
-    {
-        if (s.CanSeek) s.Position = start;
-    }
-}    // returns -1 if the mod type can't be found
     static int ReadType(BinaryReader br, bool isWall)
     {
         if (br.ReadBoolean()) return br.ReadUInt16();
@@ -165,5 +199,41 @@ public static void Place(Stream s, int x0, int y0, int keepMarkerType = -1)
         string name = br.ReadString();
         if (isWall) return ModContent.TryFind(name, out ModWall mw) ? mw.Type : -1;
         return ModContent.TryFind(name, out ModTile mt) ? mt.Type : -1;
+    }
+}
+
+public class StructureVariantSet
+{
+    readonly byte[][] _data;
+    readonly (int width, int height)[] _sizes;
+
+    public StructureVariantSet(byte[][] data, (int width, int height)[] sizes)
+    {
+        _data = data;
+        _sizes = sizes;
+    }
+
+    public static StructureVariantSet Open(Mod mod, string[] paths)
+    {
+        var data = new byte[paths.Length][];
+        var sizes = new (int, int)[paths.Length];
+        for (int i = 0; i < paths.Length; i++)
+        {
+            using var ms = StructureReader.Open(mod, paths[i]);
+            sizes[i] = StructureReader.GetSize(ms);
+            data[i] = ms.ToArray();
+        }
+
+
+        return new StructureVariantSet(data, sizes);
+    }
+
+    public (int width, int height) GetSize(int variant) => _sizes[variant];
+
+
+    public void Place(int variant, int x0, int y0, int keepMarkerType = -1, StructureReader.CellFilter filter = null)
+    {
+        using var ms = new MemoryStream(_data[variant], writable: false);
+        StructureReader.Place(ms, x0, y0, keepMarkerType, filter);
     }
 }

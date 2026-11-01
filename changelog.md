@@ -1,4 +1,10 @@
-﻿# v0.3
+﻿# v0.4
+- Add StructureVariantSet class
+- Add lambda expression support for StructureReader.Place
+- Add new usage examples
+- Add StructureAssets class
+
+# v0.3
 - Add relative to selection origin position under cursor for SelectionWand
 - Add placement mode with keep markers in menu
 - Remove saving some tiles as containers, mannequin. Full list: field `IgnoredTiles` in  [StructureSaver.cs](Content/StructureSaver.cs)

@@ -56,4 +56,4 @@ own mod's code. The finished mod has no dependency on FastStructure.
 5. Write `/savestruct <name>` (Or open the Structure Menu Item and click on the Save button)
 6. Copy the binary file .../MyGames/Terraria/tModLoader/SavedStructures/<name>.bin to your mod source
 7. Copy the [StructureReader.cs](Content/StructureReader.cs) file
-8. See the [UsageExample.cs](Content/UsageExample.cs) for how to use it
+8. See the [ExampleSavedStructureGen.cs](Content/Examples/ExampleSavedStructureGen.cs) for how to use it
