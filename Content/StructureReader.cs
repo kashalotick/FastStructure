@@ -206,6 +206,8 @@ public class StructureVariantSet
 {
     readonly byte[][] _data;
     readonly (int width, int height)[] _sizes;
+    
+    public int Count => _data.Length;
 
     public StructureVariantSet(byte[][] data, (int width, int height)[] sizes)
     {

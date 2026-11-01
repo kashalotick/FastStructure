@@ -1,4 +1,7 @@
-﻿# v0.4
+﻿# WIP v0.4.1
+- Add Count to StructureVariantSet
+
+# v0.4
 - Add StructureVariantSet class
 - Add lambda expression support for StructureReader.Place
 - Add new usage examples
