@@ -1,4 +1,4 @@
-﻿# WIP v0.4.1
+﻿# v0.4.1
 - Add Count to StructureVariantSet
 - Remove random tile number and slope for furniture
 
