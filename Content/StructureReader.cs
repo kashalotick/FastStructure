@@ -4,6 +4,7 @@ using Microsoft.Build.Tasks;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Terraria.ObjectData;
 
 namespace FastStructure.Content;
 
@@ -163,9 +164,14 @@ public class StructureReader
                     t.TileType = (ushort)type;
                     t.TileFrameX = fx;
                     t.TileFrameY = fy;
-                    t.TileFrameNumber = (byte)WorldGen.genRand.Next(3);
+                    t.TileFrameNumber = TileObjectData.GetTileData(t) == null
+                        ? (byte)WorldGen.genRand.Next(3)
+                        : (byte)0;                    
                     t.TileColor = color;
-                    t.BlockType = (BlockType)block;
+                    
+                    bool furniture = TileObjectData.GetTileData(t) != null && !TileID.Sets.Platforms[type];
+                    t.BlockType = furniture ? BlockType.Solid : (BlockType)block;
+                    
                     t.HasActuator = (flags & 1) != 0;
                     t.IsActuated = (flags & 2) != 0;
                 }
